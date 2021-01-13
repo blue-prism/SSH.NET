@@ -1,14 +1,21 @@
-<html xmlns="http://www.w3.org/TR/xhtml1/strict">
-  <body>
-    <h1>Business Object Definition</h1>
-    <h2>About this document...</h2>
-    <div>The Business Object Definition describes the APIs available within a single business object, their parameters and their behaviours from both a business and technical perspective. The definition of each object function describes the business function of the interface, the parameters and usage of the business function and any technical notes required in the on-going support of the interface, including reference to the capabilities of the object. The Business Object Definition API is a dual-purpose document designed to serve the needs of both business users and technical system support staff who require information relating to the business functions available and their details. As such, the BOD is a working document and is subject to change during the course of development and implementation.</div>
-    <h2>About Business Objects</h2>
-    <div>Business Objects within the environment (i.e. objects which may be drawn onto a process to capture and replicate a part of a business process) adhere to strict guidelines in their implementation. The definition and behaviour of the object both as seen in Process Studio during design time and as implemented during test or via Control Room at runtime uses the same interface definition, known as an object's capabilities. All business objects used within Blue Prism, generic and bespoke, have a common property - Get Capabilities. The GetCapabilities function returns an XML formatted string which defines the interfaces for that object, their friendly names (as they appear in Process Studio) and any inputs and outputs that are required. The Business Object Definition object captures the name, parameters, preconditions and endpoints of each function relating to a business object and translates to the object definition seen within Process Studio.</div>
-    <h2>1.0 BluePrism SSH.NET</h2>
-    <div>BluePrism SSH.NET is a VBO wrapper for SSH.NET - a Secure Shell (SSH-2) library for .NET</div>
-    <p>The runmode of this business object is "exclusive"</p>
-    <h3>1.1 Delete File</h3>
+# SSH.NET
+This is a VBO wrapper for SSH.NET which is a Secure Shell (SSH) library for .NET, optimized for parallelism. The source code of SSH.NET can be found at https://github.com/sshnet/SSH.NET
+
+## Usage
+The asset provides following actions. Further actions may be added in the future
+
+* **Execute Command**
+* **Upload File**
+* **Download File**
+* **Download Directory**
+* **List Files**
+* **Delete File**
+
+## Configuration
+* Download or clone this repository. Extract the *.bprelease file* and import it into your Blue Prism environment
+* Copy Renci.SshNet.dll to C:\Program Files\Blue Prism Limited\Blue Prism Automate or your BluePrism installation directory
+
+<h3>1.1 Delete File</h3>
     <div>Deletes file from remote directory</div>
     <table>
       <tr>
@@ -314,5 +321,9 @@
         <td>Exception response during execution</td>
       </tr>
     </table>
-  </body>
-</html>
+
+## Help
+
+If issues are encountered, please submit a new issue on the Issues tab for this repository:
+
+https://github.com/blue-prism/SSH.NET/issues
