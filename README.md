@@ -4,17 +4,18 @@ This is a VBO wrapper for SSH.NET which is a Secure Shell (SSH) library for .NET
 ## Usage
 The asset provides following actions. Further actions may be added in the future
 
-* **Execute Command**
-* **Upload File**
-* **Download File**
-* **Download Directory**
-* **List Files**
 * **Delete File**
+* **Download Directory**
+* **Download File**
+* **Execute Command**
+* **List Files**
+* **Upload File**
 
 ## Configuration
 * Download or clone this repository. Extract the *.bprelease file* and import it into your Blue Prism environment
 * Copy Renci.SshNet.dll to C:\Program Files\Blue Prism Limited\Blue Prism Automate or your BluePrism installation directory
 
+## Actions
 <h3>1.1 Delete File</h3>
     <div>Deletes file from remote directory</div>
     <table>
