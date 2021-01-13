@@ -1,8 +1,6 @@
 <html xmlns="http://www.w3.org/TR/xhtml1/strict">
   <body>
     <h1>Business Object Definition</h1>
-    <div>The information contained in this document is the proprietary information of Blue Prism Limited and should not be disclosed to a third party without the written consent of an authorised Blue Prism representative.</div>
-    <div>(c) Blue Prism Limited</div>
     <h2>About this document...</h2>
     <div>The Business Object Definition describes the APIs available within a single business object, their parameters and their behaviours from both a business and technical perspective. The definition of each object function describes the business function of the interface, the parameters and usage of the business function and any technical notes required in the on-going support of the interface, including reference to the capabilities of the object. The Business Object Definition API is a dual-purpose document designed to serve the needs of both business users and technical system support staff who require information relating to the business functions available and their details. As such, the BOD is a working document and is subject to change during the course of development and implementation.</div>
     <h2>About Business Objects</h2>
