@@ -1,5 +1,5 @@
 # SSH.NET
-This is a VBO wrapper for SSH.NET which is a Secure Shell (SSH) library for .NET. The source code of SSH.NET can be found at https://github.com/sshnet/SSH.NET
+A BluePrism VBO wrapper for SSH.NET which is a Secure Shell (SSH) library for .NET. The source code of SSH.NET can be found at https://github.com/sshnet/SSH.NET
 
 ## Usage
 The asset provides following actions. Further actions may be added in the future
