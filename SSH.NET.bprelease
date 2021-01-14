@@ -1,0 +1,243 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<bpr:release xmlns:bpr="http://www.blueprism.co.uk/product/release">
+    <bpr:name>SSH.NET</bpr:name>
+    <bpr:release-notes>BluePrism SSH.NET</bpr:release-notes>
+    <bpr:created>2021-01-14 03:59:45Z</bpr:created>
+    <bpr:package-id>233</bpr:package-id>
+    <bpr:package-name>BluePrism SSH.NET</bpr:package-name>
+    <bpr:user-created-by>admin</bpr:user-created-by>
+    <bpr:contents count="2">
+        <object id="33e74c2d-b212-4182-9771-6218023f5f59" name="BluePrism SSH.NET" xmlns="http://www.blueprism.co.uk/product/process"><process name="BluePrism SSH.NET" version="1.0" bpversion="6.7.1.21315" narrative="BluePrism SSH.NET is a VBO wrapper for SSH.NET - a Secure Shell (SSH-2) library for .NET" byrefcollection="true" type="object" runmode="Exclusive"><appdef><element name="Application Root"><id>29cea461-9448-4e2d-862d-95809cc6f62d</id><type>Application</type><basetype>Application</basetype><datatype>unknown</datatype><diagnose>False</diagnose></element></appdef><view><camerax>191</camerax><cameray>0</cameray><zoom version="2">1.25</zoom></view><preconditions /><endpoint narrative="" /><subsheet subsheetid="c153783d-4420-4eba-9ed2-33011a422d57" type="CleanUp" published="True"><name>Clean Up</name><view><camerax>0</camerax><cameray>0</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="75cf6669-6c44-4107-8ac8-c59b5813314f" type="Normal" published="True"><name>Execute Command</name><view><camerax>0</camerax><cameray>63</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d" type="Normal" published="True"><name>Upload File</name><view><camerax>0</camerax><cameray>21</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="06734a96-dbd9-4d13-afef-cc78adece297" type="Normal" published="True"><name>Download File</name><view><camerax>0</camerax><cameray>21</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="e38ae996-2515-45be-8738-2d5d526de3d0" type="Normal" published="True"><name>Download Directory</name><view><camerax>0</camerax><cameray>21</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="4d34765d-4dab-40d3-b922-cba3d035112d" type="Normal" published="True"><name>List Files</name><view><camerax>-43</camerax><cameray>21</cameray><zoom version="2">1.25</zoom></view></subsheet><subsheet subsheetid="ecc63363-17c3-4e40-b3d0-5bb6c756c595" type="Normal" published="True"><name>Delete File</name><view><camerax>0</camerax><cameray>42</cameray><zoom version="2">1.25</zoom></view></subsheet><stage stageid="461e8bc7-54c2-429b-8145-395b112c230e" name="Start" type="Start"><loginhibit /><display x="15" y="-105" /><onsuccess>735bb09e-1351-4bbc-9b85-5693d6b356e1</onsuccess></stage><stage stageid="735bb09e-1351-4bbc-9b85-5693d6b356e1" name="End" type="End"><loginhibit /><display x="15" y="90" /></stage><stage stageid="81d8c007-64af-4714-9528-5a6a2128ea1f" name="Stage1" type="ProcessInfo"><display x="-195" y="-105" w="150" h="90" /><references><reference>System.dll</reference><reference>System.Data.dll</reference><reference>System.Xml.dll</reference><reference>System.Drawing.dll</reference><reference>Renci.SshNet.dll</reference><reference>System.Runtime.dll</reference><reference>System.Linq.dll</reference></references><imports><import>System</import><import>System.Drawing</import><import>System.Data</import><import>Renci.SshNet</import><import>System.Threading</import><import>System.Text</import><import>Renci.SshNet.Sftp</import><import>System.Linq</import><import>System.Collections</import><import>System.Reflection</import><import>System.Collections.Generic</import><import>System.IO</import></imports><language>csharp</language><globalcode><![CDATA[]]></globalcode><code><![CDATA[//Set Connection Info
+public ConnectionInfo getConnInfo(String Host,String Username,String Password,String PrivateKeyPath)
+{
+AuthenticationMethod[] auths = new AuthenticationMethod[1];
+if (String.IsNullOrWhiteSpace(PrivateKeyPath))
+	 {
+	 auths[0] = new PasswordAuthenticationMethod(Username, Encoding.UTF8.GetBytes(Password));
+	 }
+else
+	 {
+	 PrivateKeyFile pkf = null;
+	 if (string.IsNullOrEmpty(Password))
+		 {
+		 pkf = new PrivateKeyFile(PrivateKeyPath);
+		 }
+	 else
+		 {
+		 pkf = new PrivateKeyFile(PrivateKeyPath,Password);
+		 }
+	 auths[0] = new PrivateKeyAuthenticationMethod(Username, pkf);
+	 }
+ConnectionInfo connectionInfo = new ConnectionInfo(Host, Username, auths);
+return connectionInfo;
+}
+
+//Execute Shell Command
+public String runCommand(SshClient sshclient, String command)
+{
+	SshCommand sc = sshclient.CreateCommand(command);
+	sc.Execute();
+	return sc.Result;
+}
+
+// Upload A File
+public void uploadFile(SftpClient sftp,String localFilePath,String remoteDirectory)
+	{
+		sftp.ChangeDirectory(remoteDirectory);
+		using (var uplfileStream = System.IO.File.OpenRead(localFilePath)){
+                sftp.UploadFile(uplfileStream, Path.GetFileName(localFilePath), true);
+            }
+	}
+
+// Download A File
+public void downloadFile(SftpClient sftp,String localFilePath,String remoteFilePath)
+{
+	using (Stream fileStream = File.OpenWrite(localFilePath))
+		{
+			sftp.DownloadFile(remoteFilePath, fileStream);
+		}    
+}
+
+//Download Directory
+public static void downloadDirectory(
+    SftpClient sftpClient, string sourceRemotePath, string destLocalPath)
+{
+    Directory.CreateDirectory(destLocalPath);
+    IEnumerable<SftpFile> files = sftpClient.ListDirectory(sourceRemotePath);
+    foreach (SftpFile file in files)
+    {
+        if ((file.Name != ".") && (file.Name != ".."))
+        {
+            string sourceFilePath = sourceRemotePath + "/" + file.Name;
+            string destFilePath = Path.Combine(destLocalPath, file.Name);
+            if (file.IsDirectory)
+            {
+                downloadDirectory(sftpClient, sourceFilePath, destFilePath);
+            }
+            else
+            {
+                using (Stream fileStream = File.Create(destFilePath))
+                {
+                    sftpClient.DownloadFile(sourceFilePath, fileStream);
+                }
+            }
+        }
+    }
+}
+
+//List Files
+public DataTable listFiles(SftpClient sftp,String remoteDirectory)
+	{
+	var files = sftp.ListDirectory(remoteDirectory);
+	return CreateDataTable(files);                              
+	}
+
+//Delete File
+public void deleteFile(SftpClient sftp,String remoteFilePath)
+	{
+	sftp.DeleteFile(remoteFilePath);                         
+	}
+	
+//Convert IEnumerable to Datatable
+public static DataTable CreateDataTable(IEnumerable source)
+    {
+        var table = new DataTable();
+        int index = 0;
+        var properties = new List<PropertyInfo>();
+        foreach (var obj in source)
+        {
+            if (index == 0)
+            {
+                foreach (var property in obj.GetType().GetProperties())
+                {
+                    if (Nullable.GetUnderlyingType(property.PropertyType) != null)
+                    {
+                        continue;
+                    }
+					if(property.Name!="Attributes")
+					{
+						properties.Add(property);
+						table.Columns.Add(new DataColumn(property.Name, typeof(string)));
+					}                   
+                }
+            }
+            object[] values = new object[properties.Count];
+            for (int i = 0; i < properties.Count; i++)
+            {
+                values[i] = properties[i].GetValue(obj);
+            }
+            table.Rows.Add(values);
+            index++;
+        }
+        return table;
+    }]]></code></stage><stage stageid="1f8dc5f7-1144-4bfc-92dd-dffe893b3662" name="Clean Up" type="SubSheetInfo"><subsheetid>c153783d-4420-4eba-9ed2-33011a422d57</subsheetid><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="59bc47a1-88bd-46f7-abaa-0625eed02242" name="Start" type="Start"><subsheetid>c153783d-4420-4eba-9ed2-33011a422d57</subsheetid><loginhibit /><display x="15" y="-105" /><onsuccess>0cafa4d6-bb55-4204-8682-4c7d96025bb7</onsuccess></stage><stage stageid="0cafa4d6-bb55-4204-8682-4c7d96025bb7" name="End" type="End"><subsheetid>c153783d-4420-4eba-9ed2-33011a422d57</subsheetid><loginhibit /><display x="15" y="90" /></stage><stage stageid="f296847d-02fb-4d68-93fd-b1d6f82cda62" name="Execute Command" type="SubSheetInfo"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><narrative>Execute's command on remote server using SSH</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="4acd8d08-b6ab-4d33-ad1b-7155e7196dbf" name="Start" type="Start"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><narrative>Execute's command on remote server using SSH</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="Command" narrative="SSH Command to run on the remote server" stage="Command" /></inputs><onsuccess>83d73725-740f-4a84-a110-08912646f362</onsuccess></stage><stage stageid="b34cd16f-385f-4bb9-928a-7fd5a3cb456b" name="End" type="End"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Response" narrative="SSH response after command execution" stage="Response" /><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /></outputs></stage><stage stageid="7535a255-e60e-461e-9f5c-5c6a0ee244ca" name="Note1" type="Note"><subsheetid>c153783d-4420-4eba-9ed2-33011a422d57</subsheetid><narrative>Clean Up Page
+
+This is an optional page where you might choose to perform some finalisation (or "cleanup") tasks as your business object is closed down.
+
+The cleanup action will be called automatically immediately after closing your business object at the end of a business process.
+
+You will not be able to call this action from a business process, nor will it be called at any other time than before the disposal of the business object.</narrative><display x="-180" y="60" w="180" h="230" /></stage><stage stageid="d69a0ace-af09-4d29-8670-37517bfae888" name="Note2" type="Note"><narrative>Initialise Page
+
+This is an optional page where you might choose to perform some initialisation tasks after your business object is loaded.
+
+The initialise action will be called automatically immediately after loading your business object.
+
+You will not be able to call this action from a business process, nor will it be called at any other time than after the creation of the object.</narrative><display x="-180" y="60" w="180" h="230" /></stage><stage stageid="83d73725-740f-4a84-a110-08912646f362" name="Execute Command" type="Code"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><narrative>Runs SSH command on remote server and returns response</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="text" name="Command" expr="[Command]" /><input type="password" name="Password" expr="[Password]" /></inputs><outputs><output type="text" name="Response" stage="Response" /><output type="text" name="Exception" stage="Exception" /></outputs><onsuccess>b34cd16f-385f-4bb9-928a-7fd5a3cb456b</onsuccess><code><![CDATA[Response="";
+Exception="";
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sshclient = new SshClient(connectionInfo);
+	sshclient.Connect(); 
+	SshCommand sc = sshclient.CreateCommand(Command);
+	sc.Execute();
+	Response = sc.Result;
+	sshclient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="12de265d-2b15-4a64-86b4-032e8ed29a76" name="Upload File" type="SubSheetInfo"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><narrative>Uploads file to remote server</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="879029d0-8b85-47b9-b7ce-72bf1126c14c" name="Download File" type="SubSheetInfo"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><narrative>Downloads file from remote server</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="4914863e-991c-41fa-8a7c-56aa1b66dc38" name="Input Data Items" type="Block"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="ec0eaf20-e5c8-45bb-a7de-bc4b9cbdd79b" name="Local Data Items" type="Block"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="4e5a88a9-a06f-4aae-8dfb-1fa9c273d784" name="Output Data Items" type="Block"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="c7d10ef9-ac93-446d-9c21-f60a7c70747b" name="Input Data Items" type="Block"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="7720b536-0b0d-4e4f-89a2-f35b48072b45" name="Local Data Items" type="Block"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="de743e4a-2277-41ca-8da3-57199dfa6c26" name="Output Data Items" type="Block"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="f17ed761-2b30-4ead-a90f-ff83afc8d650" name="Input Data Items" type="Block"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="21a17e5f-b43f-4d5b-ae5f-4f7368fec9f1" name="Local Data Items" type="Block"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="d9fdac6a-e485-4332-bdd3-ac3a9c6f45ca" name="Output Data Items" type="Block"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="06c03b02-2c1d-4a31-914a-5b8e04d89b57" name="Response" type="Data"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><narrative>SSH response after command execution</narrative><display x="-255" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="71a11006-79ae-4d8c-9c44-b34d95885568" name="Command" type="Data"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><loginhibit /><narrative>SSH Command to run on the remote server</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="02a27190-107c-4b1e-a87f-fadb0b5a4c2f" name="Note3" type="Note"><loginhibit /><narrative>‘The MIT License’
+
+© 2021 Blue Prism Limited
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+</narrative><display x="465" y="0" w="240" h="300" /><font family="Segoe UI" size="10" style="Regular" color="3366FF" /></stage><stage stageid="735b3788-db60-4186-a4b5-20be55fe08ab" name="Username" type="Data"><loginhibit /><narrative>Username for the remote server login</narrative><display x="195" y="-30" /><datatype>text</datatype><initialvalue /><alwaysinit /></stage><stage stageid="36239099-d3af-4127-a8a0-4b265e05677d" name="Host" type="Data"><loginhibit /><narrative>Hostname or IP address of the remote server</narrative><display x="135" y="-30" /><datatype>text</datatype><initialvalue /><alwaysinit /></stage><stage stageid="2547768e-1167-4bc8-9d46-f1f7e1a2c1fd" name="Private Key FilePath" type="Data"><loginhibit /><narrative>Private Key FilePath stored locally</narrative><display x="255" y="-30" /><datatype>text</datatype><initialvalue /><alwaysinit /></stage><stage stageid="c2a2af01-e8df-43c9-8843-a5b10fa26b56" name="Global Data Items" type="Block"><loginhibit /><display x="90" y="-75" w="210" h="165" /><font family="Segoe UI" size="10" style="Regular" color="00CCFF" /></stage><stage stageid="b1af2a4d-8eb1-4c4a-ba19-1360027d9249" name="Password" type="Data"><loginhibit /><narrative>Password for the remote server login</narrative><display x="135" y="15" /><datatype>password</datatype><initialvalueenc></initialvalueenc><alwaysinit /></stage><stage stageid="0ecfa225-95dc-4b20-a12b-27db97e78ee1" name="Download Directory" type="SubSheetInfo"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><narrative>Downloads contents of remote directory</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="326fdacc-7d27-4bbf-bc22-9155fb1aa5f8" name="List Files" type="SubSheetInfo"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><narrative>Retrieves filenames from remote directory</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="16ede817-52a1-4671-934d-3621ad7d7033" name="Delete File" type="SubSheetInfo"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><narrative>Deletes file from remote directory</narrative><display x="-195" y="-105" w="150" h="90" /></stage><stage stageid="a0f0e2cf-13e2-4f16-9f4e-022817ed1da4" name="Exception" type="Data"><subsheetid>75cf6669-6c44-4107-8ac8-c59b5813314f</subsheetid><narrative>Exception response during execution</narrative><display x="-195" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="59b226d6-6253-4bfb-a940-d555e272cbf4" name="Start" type="Start"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><narrative>Uploads file to remote server</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="localFilePath" narrative="Path of local file to upload" stage="localFilePath" /><input type="text" name="remoteDirectory" narrative="Remote directory path where the file gets uploaded" stage="remoteDirectory" /></inputs><onsuccess>45f12a81-d408-43ef-a5e7-a422b91e7f5a</onsuccess></stage><stage stageid="94f0740c-946c-4c8d-9597-0420b5e33210" name="Exception" type="Data"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><narrative>Exception response during execution</narrative><display x="-255" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="c4d9ddad-f2b4-48cf-8f1a-52d982498080" name="End" type="End"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /></outputs></stage><stage stageid="45f12a81-d408-43ef-a5e7-a422b91e7f5a" name="Upload file" type="Code"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><loginhibit /><narrative>Uploads a local file to remote directory</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="password" name="Password" expr="[Password]" /><input type="text" name="localFilePath" expr="[localFilePath]" /><input type="text" name="remoteDirectory" expr="[remoteDirectory]" /></inputs><outputs><output type="text" name="Exception" stage="Exception" /></outputs><onsuccess>c4d9ddad-f2b4-48cf-8f1a-52d982498080</onsuccess><code><![CDATA[Exception="";
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sftpClient = new SftpClient(connectionInfo);
+	sftpClient.Connect(); 
+	uploadFile(sftpClient,localFilePath,remoteDirectory);
+	sftpClient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="7cb1004f-69a4-42b0-a0ac-f73d2bfe20dc" name="localFilePath" type="Data"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><narrative>Path of local file to upload</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="03f52920-e7fa-4054-84c7-4cdd1d5272e1" name="remoteDirectory" type="Data"><subsheetid>a14cc5e1-c4f4-4748-aae2-d34a2b6ee24d</subsheetid><narrative>Remote directory path where the file gets uploaded</narrative><display x="-195" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="3d50b9a4-c47f-4aa5-a0bf-4532b740f4f9" name="Download file" type="Code"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><narrative>Downloads file from remote server</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="password" name="Password" expr="[Password]" /><input type="text" name="localFilePath" expr="[localFilePath]" /><input type="text" name="remoteFilePath" expr="[remoteFilePath]" /></inputs><outputs><output type="text" name="Exception" stage="Exception" /></outputs><onsuccess>54c0eccf-a232-4d15-9bf0-3fba16f5a8fe</onsuccess><code><![CDATA[Exception="";
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sftpClient = new SftpClient(connectionInfo);
+	sftpClient.Connect(); 
+	downloadFile(sftpClient,localFilePath,remoteFilePath);
+	sftpClient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="41cb0383-428c-4276-9ced-3c98c0852c66" name="Start" type="Start"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><narrative>Uploads file to remote server</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="localFilePath" narrative="File save location" stage="localFilePath" /><input type="text" name="remoteFilePath" narrative="Remote file to download" stage="remoteFilePath" /></inputs><onsuccess>3d50b9a4-c47f-4aa5-a0bf-4532b740f4f9</onsuccess></stage><stage stageid="54c0eccf-a232-4d15-9bf0-3fba16f5a8fe" name="End" type="End"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /></outputs></stage><stage stageid="f69e8efa-3f4f-49c2-abec-1937373a72ff" name="Exception" type="Data"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><narrative>Exception response during execution</narrative><display x="-255" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="3c3f0f9c-142b-4a37-989f-f5c3cfd0cfa8" name="localFilePath" type="Data"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><narrative>File save location</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="7d8834a3-42f9-4eba-b0d1-8f680bebc8dd" name="remoteFilePath" type="Data"><subsheetid>06734a96-dbd9-4d13-afef-cc78adece297</subsheetid><narrative>Remote file to download</narrative><display x="-195" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="8ac54a5b-f3ae-49af-ac47-ae4cd4dcbb4e" name="Input Data Items" type="Block"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="02c1fd3c-1ed4-4f29-a63e-73e8d3fcf9bc" name="Local Data Items" type="Block"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="56722384-4fa3-4dd8-919f-57c021726cc8" name="Output Data Items" type="Block"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="33e9ca13-afe0-41f9-bd85-6201282ca2a4" name="Download Directory" type="Code"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><narrative>Downloads contents of remote directory</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="password" name="Password" expr="[Password]" /><input type="text" name="localFolderPath" expr="[localFolderPath]" /><input type="text" name="remoteFolderPath" expr="[remoteFolderPath]" /></inputs><outputs><output type="text" name="Exception" stage="Exception" /></outputs><onsuccess>986f3301-5b99-4227-87aa-a50ac7c37e65</onsuccess><code><![CDATA[Exception="";
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sftpClient = new SftpClient(connectionInfo);
+	sftpClient.Connect(); 
+	downloadDirectory(sftpClient,remoteFolderPath,localFolderPath);
+	sftpClient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="f3f791d0-19ba-4a75-8d69-4b2db8681537" name="Start" type="Start"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><narrative>Uploads file to remote server</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="localFolderPath" narrative="Folder save location" stage="localFolderPath" /><input type="text" name="remoteFolderPath" narrative="Remote directory to download" stage="remoteFolderPath" /></inputs><onsuccess>33e9ca13-afe0-41f9-bd85-6201282ca2a4</onsuccess></stage><stage stageid="986f3301-5b99-4227-87aa-a50ac7c37e65" name="End" type="End"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /></outputs></stage><stage stageid="dad9b5e8-8ff9-4ef2-ac33-bc10fb3e866c" name="Exception" type="Data"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><narrative>Exception response during execution</narrative><display x="-255" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="59c38ac4-85b5-4e08-8968-a7ad4af166f5" name="localFolderPath" type="Data"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><narrative>Folder save location</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="78a4e504-5da9-4500-939e-527ce223c9a8" name="remoteFolderPath" type="Data"><subsheetid>e38ae996-2515-45be-8738-2d5d526de3d0</subsheetid><narrative>Remote directory to download</narrative><display x="-195" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="8d12e542-52de-47a8-a4d8-cc3f81d824b9" name="Input Data Items" type="Block"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="f8e445e8-7b24-4363-a233-5639636d3a7e" name="Local Data Items" type="Block"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="220549d9-4472-45a2-a011-6b30fe31a024" name="Output Data Items" type="Block"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="f6603548-0950-4072-8b15-dccd600b375c" name="List Files" type="Code"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><narrative>Retrieves filenames from remote directory</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="password" name="Password" expr="[Password]" /><input type="text" name="remoteDirectory" expr="[remoteDirectory]" /></inputs><outputs><output type="text" name="Exception" stage="Exception" /><output type="collection" name="files" stage="Files" /></outputs><onsuccess>613e952c-d0ec-4874-9cc2-657719b7d9de</onsuccess><code><![CDATA[Exception="";
+files = new DataTable();
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sftpClient = new SftpClient(connectionInfo);
+	sftpClient.Connect(); 
+	files=listFiles(sftpClient,remoteDirectory);
+	sftpClient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="13d8eb55-4822-4baa-8dd6-9d924b120c6b" name="Start" type="Start"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><narrative>Retrieves filenames from remote directory</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="remoteDirectory" narrative="Directory path on remote server" stage="remoteDirectory" /></inputs><onsuccess>f6603548-0950-4072-8b15-dccd600b375c</onsuccess></stage><stage stageid="613e952c-d0ec-4874-9cc2-657719b7d9de" name="End" type="End"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /><output type="collection" name="Files" narrative="Files in the remote directory" stage="Files" /></outputs></stage><stage stageid="079a57af-e80f-4daf-9fe8-5a614c8e0549" name="Exception" type="Data"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><narrative>Exception response during execution</narrative><display x="-195" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="29cd1f75-c803-4425-a956-27d029add91d" name="remoteDirectory" type="Data"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><narrative>Directory path on remote server</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="5efb6896-89a5-48f0-9ee9-9c504cd21130" name="Files" type="Collection"><subsheetid>4d34765d-4dab-40d3-b922-cba3d035112d</subsheetid><loginhibit /><narrative>Files in the remote directory</narrative><display x="-255" y="135" /><datatype>collection</datatype><private /><alwaysinit /></stage><stage stageid="60dc7b33-a1da-4d24-ac33-db54aa929c23" name="Input Data Items" type="Block"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><display x="-300" y="30" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="FFCC00" /></stage><stage stageid="2f6ac930-cfb1-4dec-93dd-e21f2ab3810e" name="Local Data Items" type="Block"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><display x="-300" y="-45" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="339966" /></stage><stage stageid="8915cfba-fcd7-4287-9287-a61d5720e855" name="Output Data Items" type="Block"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><display x="-300" y="105" w="210" h="60" /><font family="Segoe UI" size="10" style="Regular" color="993300" /></stage><stage stageid="39233c3d-7793-4ebd-81c6-149ab30158ae" name="Delete File" type="Code"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><narrative>Deletes file from remote directory</narrative><display x="15" y="-30" /><inputs><input type="text" name="Username" expr="[Username]" /><input type="text" name="Host" expr="[Host]" /><input type="text" name="keyLocation" expr="[Private Key FilePath]" /><input type="password" name="Password" expr="[Password]" /><input type="text" name="remoteFilePath" expr="[remoteFilePath]" /></inputs><outputs><output type="text" name="Exception" stage="Exception" /></outputs><onsuccess>498f5458-757a-4326-8858-3613734080f7</onsuccess><code><![CDATA[Exception="";
+try
+{
+	ConnectionInfo connectionInfo;
+	connectionInfo=getConnInfo(Host,Username,Password,keyLocation);
+	var sftpClient = new SftpClient(connectionInfo);
+	sftpClient.Connect(); 
+	deleteFile(sftpClient,remoteFilePath);
+	sftpClient.Disconnect(); 
+}
+catch (Exception ex)
+{
+	Exception=ex.Message;
+}]]></code></stage><stage stageid="3f14e224-89b0-4895-a4d1-8e72fa8dc3f4" name="Start" type="Start"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><narrative>Deletes file from remote directory</narrative><display x="15" y="-105" /><inputs><input type="text" name="Host" narrative="Hostname or IP address of the remote server" stage="Host" /><input type="text" name="Username" narrative="Username for the remote server login" stage="Username" /><input type="password" name="Password" narrative="Private Key FilePath stored locally" stage="Password" /><input type="text" name="Private Key FilePath" narrative="Password for the remote server login" stage="Private Key FilePath" /><input type="text" name="remoteFilePath" narrative="FilePath on remote server" stage="remoteFilePath" /></inputs><onsuccess>39233c3d-7793-4ebd-81c6-149ab30158ae</onsuccess></stage><stage stageid="498f5458-757a-4326-8858-3613734080f7" name="End" type="End"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><loginhibit /><narrative>End of action</narrative><display x="15" y="45" /><outputs><output type="text" name="Exception" narrative="Exception response during execution" stage="Exception" /></outputs></stage><stage stageid="8d156693-7d70-4ae8-889f-ce13fba6cef1" name="Exception" type="Data"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><narrative>Exception response during execution</narrative><display x="-255" y="135" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage><stage stageid="a3faa4cd-5bb5-4985-bd85-5ab0a0a3ca23" name="remoteFilePath" type="Data"><subsheetid>ecc63363-17c3-4e40-b3d0-5bb6c756c595</subsheetid><narrative>FilePath on remote server</narrative><display x="-255" y="60" /><datatype>text</datatype><initialvalue /><private /><alwaysinit /></stage></process></object>
+        <object-group id="0ab93741-f878-49f8-8d89-78e98a24aed0" name="Default" isDefaultGroup="True" xmlns="http://www.blueprism.co.uk/product/object-group">
+            <members>
+                <object id="33e74c2d-b212-4182-9771-6218023f5f59" />
+            </members>
+        </object-group>
+    </bpr:contents>
+</bpr:release>
